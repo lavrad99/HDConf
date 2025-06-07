@@ -1,8 +1,10 @@
+#' Function for performing the Moore-Penrose pseudo-inverse using SVD
+#' @param X is a matrix
+#' @param numerical_zero is the level at which an eigenvalue is considered zero
+#' @return The Moore-Penrose pseudo-inverse of X
+#' @export
 pinv_SVD <- function(X , numerical_zero = 1e-7){
-  #' Function for performing the Moore-Penrose pseudo-inverse using SVD
-  #' @param X is a matrix
-  #' @param numerical_zero is the level at which an eigenvalue is considered zero
-  #' @return The Moore-Penrose pseudo-inverse of X
+
   my_helpf <- function(z){
     if(abs(z) < numerical_zero){
       return(0)
@@ -14,13 +16,14 @@ pinv_SVD <- function(X , numerical_zero = 1e-7){
   return(my_SVD$v%*%diag(sapply(my_SVD$d , my_helpf))%*%t(my_SVD$u))
 }
 
-
+#' Function for Ridge regression using SVD
+#' @param X is the design matrix
+#' @param y is the response vector
+#' @param lambda_list is the list of lambdas for which we want to perform Ridge regression
+#' @return the ridge coefficients when regressing y on X, using lambda_list as penalties
+#' @export
 Ridge_SVD <- function(X,y,lambda_list){
-  #' Function for Ridge regression using SVD
-  #' @param X is the design matrix
-  #' @param y is the response vector
-  #' @param lambda_list is the list of lambdas for which we want to perform Ridge regression
-  #' @return the ridge coefficients when regressing y on X, using lambda_list as penalties
+
 
   my_SVD <- propack.svd(X)
   U_Ty <- t(my_SVD$u)%*%y
@@ -43,14 +46,14 @@ create_lambda_list_Ridge <- function(X , n_lambdas = 200){
 
 }
 
-
+#' Function for K-fold cross-validation using Ridge regression
+#' @param X is the design matrix
+#' @param y is the response vector
+#' @param n_lambdas is the bumber of lambdas we want to test
+#' @param n_folds is the number of folds
+#' @return the average MSE across folds for each lambda and the lambda with the lowest average MSE
+#' @export
 CV_select_lambda_Ridge <- function(X,y,n_lambdas = 200 , n_folds = 5){
-  #' Function for K-fold cross-validation using Ridge regression
-  #' @param X is the design matrix
-  #' @param y is the response vector
-  #' @param n_lambdas is the bumber of lambdas we want to test
-  #' @param n_folds is the number of folds
-  #' @return the average MSE across folds for each lambda and the lambda with the lowest average MSE
 
 
   my_ret <- list()
@@ -93,15 +96,16 @@ CV_select_lambda_Ridge <- function(X,y,n_lambdas = 200 , n_folds = 5){
 }
 
 
-
+#' Function for high-dimensional OLS
+#' @param x is the exposure vector
+#' @param y is the response vector
+#' @param conf is the confound matrix
+#' @param min_DF is the minimal number of degrees of freedom in the PC-OLS approach
+#' @return the p-value and the sign of the coefficient for x
+#' @details If the full model has degrees of freedom above min_DF, the function defaults to regular OLS
+#' @export
 HD_OLS <- function(x,y,conf, min_DF = 20){
-  #' Function for high-dimensional OLS
-  #' @param x is the exposure vector
-  #' @param y is the response vector
-  #' @param conf is the confound matrix
-  #' @param min_DF is the minimal number of degrees of freedom in the PC-OLS approach
-  #' @return the p-value and the sign of the coefficient for x
-  #' @details If the full model has degrees of freedom above min_DF, the function defaults to regular OLS
+
 
   my_ret <- list()
 
@@ -143,16 +147,17 @@ HD_OLS <- function(x,y,conf, min_DF = 20){
 
 }
 
-
+#' Function for high-dimensional "OLS-PCA"
+#' @param x is the exposure vector
+#' @param y is the response vector
+#' @param conf is the confound matrix
+#' @param prop_VE is the % of Variance Explained criterion for including PCs
+#' @param min_DF is the minimal number of degrees of freedom in the OLS-PCA approach
+#' @return the p-value and the sign of the coefficient for x
+#' @details If the VE criterion yields degrees of freedom below min_DF, the function defaults to HD_OLS
+#' @export
 PCA_OLS <- function(x,y,conf,prop_VE = 0.95, min_DF = 20){
-  #' Function for high-dimensional "OLS-PCA"
-  #' @param x is the exposure vector
-  #' @param y is the response vector
-  #' @param conf is the confound matrix
-  #' @param prop_VE is the % of Variance Explained criterion for including PCs
-  #' @param min_DF is the minimal number of degrees of freedom in the OLS-PCA approach
-  #' @return the p-value and the sign of the coefficient for x
-  #' @details If the VE criterion yields degrees of freedom below min_DF, the function defaults to HD_OLS
+
 
   my_ret <- list()
 
@@ -183,16 +188,17 @@ PCA_OLS <- function(x,y,conf,prop_VE = 0.95, min_DF = 20){
 }
 
 
-
+#' Function for extracting p-values from Ridge regression using the method described in Cule, Vineis and De Iorio (2011)
+#' @param x is the exposure vector
+#' @param y is the response vector
+#' @param conf is the confound matrix
+#' @param method refers to method for selecting ridge penalty ("Cule-DeIorio" (default) or "CV")
+#' @param n_lambdas refers is the number of lambdas used in cross-validation (only used when method = "CV")
+#' @param t_test is a boolean determining whether to use t-tests (default) or z-tests
+#' @return the p-value and the sign of the coefficient for x
+#' @export
 Ridge_pvalue <- function(x,y,conf, method = 'Cule-DeIorio', n_lambdas = 200, t_test = T){
-  #' Function for extracting p-values from Ridge regression using the method described in Cule, Vineis and De Iorio (2011)
-  #' @param x is the exposure vector
-  #' @param y is the response vector
-  #' @param conf is the confound matrix
-  #' @param method refers to method for selecting ridge penalty ("Cule-DeIorio" (default) or "CV")
-  #' @param n_lambdas refers is the number of lambdas used in cross-validation (only used when method = "CV")
-  #' @param t_test is a boolean determining whether to use t-tests (default) or z-tests
-  #' @return the p-value and the sign of the coefficient for x
+
   my_ret <- list()
   if(method == 'Cule-DeIorio'){
     my_df <- as.data.frame(unname(conf))
@@ -287,17 +293,18 @@ Ridge_pvalue <- function(x,y,conf, method = 'Cule-DeIorio', n_lambdas = 200, t_t
   }
   stop("invalid method name")
 }
-
+#' Function performing permutation testing using ridge regression as described in Hemerik, Thoresen and Finos 2020
+#' @param x is the exposure vector
+#' @param y is the response vector
+#' @param conf is the confound matrix
+#' @param test_method is the method used for testing,"FLH1" (default), "FLH2" or "DR"
+#' @param fit_method is the method used for fitting, "svd" (default) or "glmnet"
+#' @param n_perms is the number of permutations in the test
+#' @param n_lambdas is the number of lambdas tested for selection using 5-fold cross-validation
+#' @return the p-value and the sign of the correlation between x and y after adjusting for confounds
+#' @export
 Ridge_PT <- function(x,y,conf,test_method = 'FLH1', fit_method = 'svd' ,n_perms = 2000 , n_lambdas = 200){
-  #' Function performing permutation testing using ridge regression as described in Hemerik, Thoresen and Finos 2020
-  #' @param x is the exposure vector
-  #' @param y is the response vector
-  #' @param conf is the confound matrix
-  #' @param test_method is the method used for testing,"FLH1" (default), "FLH2" or "DR"
-  #' @param fit_method is the method used for fitting, "svd" (default) or "glmnet"
-  #' @param n_perms is the number of permutations in the test
-  #' @param n_lambdas is the number of lambdas tested for selection using 5-fold cross-validation
-  #' @return the p-value and the sign of the correlation between x and y after adjusting for confounds
+
 
   my_ret <- list()
 
@@ -528,17 +535,18 @@ Ridge_PT <- function(x,y,conf,test_method = 'FLH1', fit_method = 'svd' ,n_perms 
 }
 
 
-
+#' Function performing high-dimensional estimation via Naive LASSO selection (see Zhao, Witten and Shojaie (2021))
+#' @param x is the exposure vector
+#' @param y is the response vector
+#' @param conf is the confound matrix
+#' @param n_lambdas is the number of lambdas tested for selection using 5-fold cross-validation
+#' @param criterion refers to the criterion for choosing lambda, "min" (default) or "1se"
+#' @param min_DF is the minimal number of degrees of freedom in the final OLS model
+#' @return the p-value and the sign of the coefficient for x
+#' @details If the full model has degrees of freedom above min_DF, the function uses HD_OLS at the last step
+#' @export
 Naive_LASSO <- function(x,y,conf,criterion = 'min',n_lambdas = 200, min_DF = 20){
-  #' Function performing high-dimensional estimation via Naive LASSO selection (see Zhao, Witten and Shojaie (2021))
-  #' @param x is the exposure vector
-  #' @param y is the response vector
-  #' @param conf is the confound matrix
-  #' @param n_lambdas is the number of lambdas tested for selection using 5-fold cross-validation
-  #' @param criterion refers to the criterion for choosing lambda, "min" (default) or "1se"
-  #' @param min_DF is the minimal number of degrees of freedom in the final OLS model
-  #' @return the p-value and the sign of the coefficient for x
-  #' @details If the full model has degrees of freedom above min_DF, the function uses HD_OLS at the last step
+
   my_ret <- list()
 
   C <- scale(as.matrix(unname(conf)))
@@ -580,18 +588,18 @@ Naive_LASSO <- function(x,y,conf,criterion = 'min',n_lambdas = 200, min_DF = 20)
 }
 
 
-
+#' Function performing high-dimensional estimation via Naive ElasticNet selection
+#' @param x is the exposure vector
+#' @param y is the response vector
+#' @param conf is the confound matrix
+#' @param n_lambdas is the number of lambdas tested for selection using 5-fold cross-validation
+#' @param n_alphas is the number of alphas tested for selection using 5-fold cross-validation
+#' @param criterion refers to the criterion for choosing lambda, "min" (default) or "1se"
+#' @param min_DF is the minimal number of degrees of freedom in the final OLS model
+#' @return the p-value and the sign of the coefficient for x
+#' @details If the full model has degrees of freedom above min_DF, the function uses HD_OLS at the last step
+#' @export
 Naive_ElasticNet <- function(x,y,conf,criterion = 'min',n_lambdas = 200, n_alphas = 10, min_DF = 20){
-  #' Function performing high-dimensional estimation via Naive ElasticNet selection
-  #' @param x is the exposure vector
-  #' @param y is the response vector
-  #' @param conf is the confound matrix
-  #' @param n_lambdas is the number of lambdas tested for selection using 5-fold cross-validation
-  #' @param n_alphas is the number of alphas tested for selection using 5-fold cross-validation
-  #' @param criterion refers to the criterion for choosing lambda, "min" (default) or "1se"
-  #' @param min_DF is the minimal number of degrees of freedom in the final OLS model
-  #' @return the p-value and the sign of the coefficient for x
-  #' @details If the full model has degrees of freedom above min_DF, the function uses HD_OLS at the last step
 
   my_ret <- list()
 
@@ -641,17 +649,18 @@ Naive_ElasticNet <- function(x,y,conf,criterion = 'min',n_lambdas = 200, n_alpha
 }
 
 
-
+#' Function performing high-dimensional estimation via LASSO Double Selection (Belloni, Cherozhukov and Hansen (2014))
+#' @param x is the exposure vector
+#' @param y is the response vector
+#' @param conf is the confound matrix
+#' @param n_lambdas is the number of lambdas tested for selection using 5-fold cross-validation
+#' @param criterion refers to the criterion for choosing lambda, "min" (default) or "1se"
+#' @param min_DF is the minimal number of degrees of freedom in the final OLS model
+#' @return the p-value and the sign of the coefficient for x
+#' @details If the full model has degrees of freedom above min_DF, the function uses HD_OLS at the last step
+#' @export
 LADS <- function(x,y,conf,criterion = 'min',n_lambdas = 200, min_DF = 20){
-  #' Function performing high-dimensional estimation via LASSO Double Selection (Belloni, Cherozhukov and Hansen (2014))
-  #' @param x is the exposure vector
-  #' @param y is the response vector
-  #' @param conf is the confound matrix
-  #' @param n_lambdas is the number of lambdas tested for selection using 5-fold cross-validation
-  #' @param criterion refers to the criterion for choosing lambda, "min" (default) or "1se"
-  #' @param min_DF is the minimal number of degrees of freedom in the final OLS model
-  #' @return the p-value and the sign of the coefficient for x
-  #' @details If the full model has degrees of freedom above min_DF, the function uses HD_OLS at the last step
+
   my_ret <- list()
 
 
@@ -715,18 +724,19 @@ LADS <- function(x,y,conf,criterion = 'min',n_lambdas = 200, min_DF = 20){
 
 
 
-
+#' Function performing high-dimensional estimation via LASSO Double Selection (Belloni, Cherozhukov and Hansen (2014))
+#' @param x is the exposure vector
+#' @param y is the response vector
+#' @param conf is the confound matrix
+#' @param n_lambdas is the number of lambdas tested for selection using 5-fold cross-validation
+#' @param n_alphas is the number of alphas tested for selection using 5-fold cross-validation
+#' @param criterion refers to the criterion for choosing lambda, "min" (default) or "1se"
+#' @param min_DF is the minimal number of degrees of freedom in the final OLS model
+#' @return the p-value and the sign of the coefficient for x
+#' @details If the full model has degrees of freedom above min_DF, the function uses HD_OLS at the last step
+#' @export
 ENDS <- function(x,y,conf,criterion = 'min',n_lambdas = 200, n_alphas = 10, min_DF = 20){
-  #' Function performing high-dimensional estimation via LASSO Double Selection (Belloni, Cherozhukov and Hansen (2014))
-  #' @param x is the exposure vector
-  #' @param y is the response vector
-  #' @param conf is the confound matrix
-  #' @param n_lambdas is the number of lambdas tested for selection using 5-fold cross-validation
-  #' @param n_alphas is the number of alphas tested for selection using 5-fold cross-validation
-  #' @param criterion refers to the criterion for choosing lambda, "min" (default) or "1se"
-  #' @param min_DF is the minimal number of degrees of freedom in the final OLS model
-  #' @return the p-value and the sign of the coefficient for x
-  #' @details If the full model has degrees of freedom above min_DF, the function uses HD_OLS at the last step
+
 
   my_ret <- list()
 
@@ -802,15 +812,15 @@ ENDS <- function(x,y,conf,criterion = 'min',n_lambdas = 200, n_alphas = 10, min_
 }
 
 
-
+#' Function performing de-sparsified LASSO estimation
+#' @param x is the exposure vector
+#' @param y is the response vector
+#' @param conf is the confound matrix
+#' @param inv_method is the method for estimating the precision matrix, either "JM" (default) (see Javanmard and Montanari (2014)) or "MP" (faster) (see Boot and Nibbering (2017))
+#' @param n_lambdas is the number of lambdas tested for selection using 5-fold cross-validation
+#' @return the p-value and the sign of the coefficient for x
+#' @export
 DESLA <- function(x,y,conf,inv_method = 'JM', n_lambdas = 200){
-  #' Function performing de-sparsified LASSO estimation
-  #' @param x is the exposure vector
-  #' @param y is the response vector
-  #' @param conf is the confound matrix
-  #' @param inv_method is the method for estimating the precision matrix, either "JM" (default) (see Javanmard and Montanari (2014)) or "MP" (faster) (see Boot and Nibbering (2017))
-  #' @param n_lambdas is the number of lambdas tested for selection using 5-fold cross-validation
-  #' @return the p-value and the sign of the coefficient for x
 
   my_ret <- list()
 
